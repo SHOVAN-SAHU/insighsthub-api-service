@@ -50,7 +50,7 @@ export const resetIfNeeded = async (usage, user) => {
 export const checkAndConsumeQuota = async (user, type) => {
   const now = new Date();
 
-  // 🔥 STEP 1: Handle expired subscription
+  // STEP 1: Handle expired subscription
   if (user.currentPeriodEnd && user.currentPeriodEnd < now) {
     user.plan = "FREE";
     user.currentPeriodEnd = null;
@@ -64,7 +64,7 @@ export const checkAndConsumeQuota = async (user, type) => {
 
   const reqType = type.toUpperCase();
 
-  // 🔥 STEP 2: get plan from DB
+  // STEP 2: get plan from DB
   const planDoc = await Plan.findOne({ name: user.plan });
 
   if (!planDoc) {
@@ -73,11 +73,11 @@ export const checkAndConsumeQuota = async (user, type) => {
 
   const limits = planDoc.limits;
 
-  // 🔥 STEP 3: usage lifecycle
+  // STEP 3: usage lifecycle
   let usage = await getOrCreateUsage(user);
   usage = await resetIfNeeded(usage, user);
 
-  // 🔥 STEP 4: atomic quota consume
+  // STEP 4: atomic quota consume
   let query = { userId: user._id };
   let update = {};
 

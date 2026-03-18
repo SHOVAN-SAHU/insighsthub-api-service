@@ -59,4 +59,7 @@ app.use("/api/v1/plans", planRoutes);
 import subscriptionRoutes from "./modules/subscription/subscription.route.js";
 app.use("/api/v1/subscription", subscriptionRoutes);
 
+import spaceRoutes from "./modules/space/space.route.js";
+app.use("/api/v1/spaces", spaceRoutes);
+
 export default app;
