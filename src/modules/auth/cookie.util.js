@@ -1,4 +1,4 @@
-import { config } from "../config/config.js";
+import { config } from "../../config/config.js";
 
 export const setAuthCookie = (res, token) => {
   res.cookie(config.cookieName, token, {
@@ -6,7 +6,7 @@ export const setAuthCookie = (res, token) => {
     secure: config.isProduction,
     sameSite: "lax",
     domain: config.isProduction ? ".insightshub.in" : undefined,
-    maxAge: config.cookieMaxAge
+    maxAge: config.cookieMaxAge,
   });
 };
 
@@ -15,6 +15,6 @@ export const clearAuthCookie = (res) => {
     httpOnly: true,
     secure: config.isProduction,
     sameSite: "lax",
-    domain: config.isProduction ? ".insightshub.in" : undefined
+    domain: config.isProduction ? ".insightshub.in" : undefined,
   });
-}
+};

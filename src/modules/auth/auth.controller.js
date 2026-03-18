@@ -1,7 +1,5 @@
-// modules/auth/auth.controller.js
-
 import { handleGoogleLogin } from "./auth.service.js";
-import { setAuthCookie, clearAuthCookie } from "../../utils/cookie.util.js";
+import { setAuthCookie, clearAuthCookie } from "./cookie.util.js";
 
 export const googleLogin = async (req, res) => {
   try {
