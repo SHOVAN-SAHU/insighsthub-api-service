@@ -1,9 +1,23 @@
 import crypto from "crypto";
 import Plan from "../plan/plan.model.js";
-import User from "../user/user.model.js";
 import { razorpayInstance } from "../../config/razorpay.js";
 import Subscription from "./subscription.model.js";
-import Usage from "../usage/usage.model.js";
+
+import {
+  handleSubscriptionActivated,
+  handleSubscriptionCharged,
+  handlePaymentCaptured,
+  handlePaymentFailed,
+  handleSubscriptionCancelled,
+} from "./subscription.service.js";
+
+const EVENT_HANDLERS = {
+  "subscription.activated": handleSubscriptionActivated,
+  "subscription.charged": handleSubscriptionCharged,
+  "payment.captured": handlePaymentCaptured,
+  "payment.failed": handlePaymentFailed,
+  "subscription.cancelled": handleSubscriptionCancelled,
+};
 
 // Recurring subscription
 export const createSubscription = async (req, res) => {
@@ -63,6 +77,9 @@ export const createSubscription = async (req, res) => {
       customer_notify: 1, // send email/SMS
       total_count: Math.ceil(plan.durationDays / 30), // months
       expire_by: Math.floor(Date.now() / 1000) + 30 * 60,
+      notify_info: {
+        notify_email: user.email,
+      },
     });
 
     // store subscription in DB
@@ -108,80 +125,12 @@ export const razorpayWebhook = async (req, res) => {
     const event = payload.event;
     console.log("event", event);
 
-    if (event === "subscription.activated") {
-      const subscriptionId = payload.payload.subscription.entity.id;
+    const handler = EVENT_HANDLERS[event];
 
-      const subscription = await Subscription.findOne({
-        razorpaySubscriptionId: subscriptionId,
-      });
-      if (!subscription) return res.status(404).send("Subscription not found");
-
-      // idempotency
-      if (subscription.status === "PAID") return res.json({ status: "ok" });
-
-      const plan = await Plan.findById(subscription.planId);
-      const user = await User.findById(subscription.userId);
-
-      const now = new Date();
-      const baseDate =
-        user.currentPeriodEnd && user.currentPeriodEnd > now
-          ? user.currentPeriodEnd
-          : now;
-
-      const endDate = new Date(baseDate);
-      endDate.setDate(endDate.getDate() + plan.durationDays);
-
-      subscription.status = "PAID";
-      subscription.startDate = now;
-      subscription.endDate = endDate;
-      await subscription.save();
-
-      user.plan = plan.name;
-      user.currentPeriodEnd = endDate;
-      await user.save();
-
-      await Usage.findOneAndUpdate(
-        { userId: user._id },
-        { uploadsUsed: 0, asksUsed: 0, resetAt: endDate },
-        { upsert: true },
-      );
-
-      console.log("Subscription activated for user", user.name || user.email);
-    }
-
-    if (event === "payment.captured") {
-      // payment.captured fires for all payments, no subscription info here
-      const paymentId = payload.payload.payment.entity.id;
-      console.log("Payment captured:", paymentId);
-    }
-
-    if (event === "payment.failed") {
-      const subscriptionId = payload.payload.payment.entity.subscription_id;
-      const subscription = await Subscription.findOne({
-        razorpaySubscriptionId: subscriptionId,
-      });
-      if (!subscription) return;
-
-      subscription.status = "FAILED";
-      await subscription.save();
-    }
-
-    if (event === "subscription.cancelled") {
-      const subscriptionId = payload.payload.subscription.entity.id;
-
-      const subscription = await Subscription.findOne({
-        razorpaySubscriptionId: subscriptionId,
-      });
-      if (!subscription) return res.status(404).send("Subscription not found");
-
-      subscription.status = "CANCELLED";
-      await subscription.save();
-
-      await User.findByIdAndUpdate(subscription.userId, {
-        cancelAtPeriodEnd: true,
-      });
-
-      console.log("Subscription cancelled for user", subscription.userId);
+    if (handler) {
+      await handler(payload);
+    } else {
+      console.log("Unhandled event:", event);
     }
 
     return res.json({ status: "ok" });
@@ -190,40 +139,3 @@ export const razorpayWebhook = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-
-// One-time order (optional)
-// export const createOrder = async (req, res) => {
-//   try {
-//     const { planId } = req.body;
-//     const userId = req.user._id;
-
-//     if (!planId) return res.status(400).json({ message: "Plan ID required" });
-
-//     // fetch plan from DB
-//     const plan = await Plan.findById(planId);
-//     if (!plan || !plan.isActive)
-//       return res.status(404).json({ message: "Invalid plan" });
-
-//     // Razorpay expects amount in paise
-//     const order = await razorpayInstance.orders.create({
-//       amount: plan.price,
-//       currency: "INR",
-//       receipt: `receipt_${Date.now()}`,
-//     });
-
-//     // store in DB
-//     await Subscription.create({
-//       userId,
-//       planId,
-//       razorpayOrderId: order.id,
-//       status: "CREATED",
-//     });
-
-//     return res.json({
-//       orderId: order.id,
-//       amount: order.amount,
-//     });
-//   } catch (err) {
-//     return res.status(400).json({ message: err.message });
-//   }
-// };

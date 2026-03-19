@@ -17,4 +17,5 @@ export const config = {
   googleClientId: process.env.GOOGLE_CLINT_ID,
   razorpayKey: process.env.RAZORPAY_KEY_ID,
   razorpaySecret: process.env.RAZORPAY_KEY_SECRET,
+  resendApiKey: process.env.RESEND_API_KEY,
 };
