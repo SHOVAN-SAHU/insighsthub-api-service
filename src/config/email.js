@@ -9,8 +9,8 @@ export const sendPaymentSuccessEmail = async (
 ) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: "InsightsHub <admin@insightshub.in>", // ← Resend sends FROM this
-      to, // ← sends TO user's gmail
+      from: "InsightsHub <subscription@insightshub.in>",
+      to,
       subject: `Payment Successful — You're on ${planName}!`,
       html: `
       <div style="font-family: sans-serif; max-width: 500px; margin: auto;">

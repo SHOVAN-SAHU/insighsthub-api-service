@@ -18,4 +18,9 @@ export const config = {
   razorpayKey: process.env.RAZORPAY_KEY_ID,
   razorpaySecret: process.env.RAZORPAY_KEY_SECRET,
   resendApiKey: process.env.RESEND_API_KEY,
+  elasticlakeEndpoint: process.env.ELASTIC_ENDPOINT,
+  elasticlakeKey: process.env.ELASTIC_ACCESS_KEY,
+  elasticlakeSecret: process.env.ELASTIC_SECRET_KEY,
+  elasticlakeBucket: process.env.ELASTIC_BUCKET,
+  elasticlakeRegion: process.env.ELASTIC_REGION,
 };

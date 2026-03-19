@@ -13,13 +13,24 @@ const documentSchema = new mongoose.Schema({
     required: true,
   },
 
-  filename: String,
-  fileUrl: String, // from storage (elasticlake, r2, etc.)
+  filename: {
+    type: String,
+    required: true,
+  },
+
+  fileKey: {
+    type: String, // storage path
+    required: true,
+  },
 
   status: {
     type: String,
     enum: ["processing", "ready", "failed"],
     default: "processing",
+  },
+
+  errorMessage: {
+    type: String,
   },
 
   isDeleted: {

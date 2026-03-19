@@ -12,6 +12,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1013.0",
+    "@aws-sdk/s3-request-presigner": "^3.1013.0",
+    "axios": "^1.13.6",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "crypto": "^1.0.1",
@@ -20,8 +23,10 @@
     "google-auth-library": "^10.6.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.0",
+    "multer": "^2.1.1",
     "razorpay": "^2.9.6",
-    "resend": "^6.9.4"
+    "resend": "^6.9.4",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
