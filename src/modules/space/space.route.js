@@ -5,7 +5,6 @@ import {
   updateSpaceMeta,
   addMembers,
   removeMembers,
-  deleteSpace,
 } from "./space.controller.js";
 
 import { requireAuth } from "../auth/auth.middleware.js";
@@ -23,6 +22,6 @@ router.patch("/:spaceId", updateSpaceMeta);
 router.post("/:spaceId/members", addMembers);
 router.delete("/:spaceId/members", removeMembers);
 
-router.delete("/:spaceId", deleteSpace);
+// router.delete("/:spaceId", deleteSpace);
 
 export default router;

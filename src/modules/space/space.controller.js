@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
 import Space from "./space.model.js";
+import User from "../user/user.model.js";
 
 export const createSpace = async (req, res) => {
   try {
@@ -150,24 +152,62 @@ export const addMembers = async (req, res) => {
       });
     }
 
+    // 🚨 Prevent abuse
+    if (members.length > 50) {
+      return res.status(400).json({
+        message: `Cannot add more than 50 members at once`,
+      });
+    }
+
+    // ✅ Precompute existing participants
+    const existingParticipants = new Set(
+      space.participants.map((p) => p.user.toString())
+    );
+
+    const ownerId = space.owner.toString();
+
+    // ✅ Validate ObjectIds first
+    const validObjectIds = members.filter((id) =>
+      mongoose.Types.ObjectId.isValid(id)
+    );
+
+    // ❗ Everything else is auto-skipped
+    const skipped = members.filter(
+      (id) => !mongoose.Types.ObjectId.isValid(id)
+    );
+
+    // ✅ Check which users actually exist
+    const users = await User.find({
+      _id: { $in: validObjectIds },
+    }).select("_id");
+
+    const validUserSet = new Set(users.map((u) => u._id.toString()));
+
     const added = [];
-    const skipped = [];
 
-    for (let memberId of members) {
-      const exists = space.participants.some(
-        (p) => p.user.toString() === memberId
-      );
-
-      if (exists || memberId === space.owner.toString()) {
+    for (let memberId of validObjectIds) {
+      // ❌ Not a real user
+      if (!validUserSet.has(memberId)) {
         skipped.push(memberId);
         continue;
       }
 
+      // ❌ Already exists OR owner
+      if (
+        existingParticipants.has(memberId) ||
+        memberId === ownerId
+      ) {
+        skipped.push(memberId);
+        continue;
+      }
+
+      // ✅ Add
       space.participants.push({
         user: memberId,
         role: "member",
       });
 
+      existingParticipants.add(memberId);
       added.push(memberId);
     }
 
@@ -249,37 +289,99 @@ export const removeMembers = async (req, res) => {
   }
 };
 
-export const deleteSpace = async (req, res) => {
-  try {
-    const user = req.user;
-    const { spaceId } = req.params;
+// export const addMembers = async (req, res) => {
+//   try {
+//     const user = req.user;
+//     const { spaceId } = req.params;
+//     const { members = [] } = req.body;
 
-    const space = await Space.findById(spaceId);
+//     const space = await Space.findById(spaceId);
 
-    if (!space || !space.isActive) {
-      return res.status(404).json({ message: "Space not found" });
-    }
+//     if (!space || !space.isActive) {
+//       return res.status(404).json({ message: "Space not found" });
+//     }
 
-    // ❌ Only owner can delete
-    if (space.owner.toString() !== user._id.toString()) {
-      return res.status(403).json({ message: "Not allowed" });
-    }
+//     if (space.type === "personal") {
+//       return res.status(400).json({
+//         message: "Cannot add members to personal space",
+//       });
+//     }
 
-    // ✅ Soft delete space
-    space.isActive = false;
-    await space.save();
+//     // Only owner
+//     if (space.owner.toString() !== user._id.toString()) {
+//       return res.status(403).json({ message: "Not allowed" });
+//     }
 
-    // ✅ Soft delete all documents in this space
-    // await DocumentMeta.updateMany(
-    //   { space: space._id },
-    //   { status: "DELETED" }
-    // );
+//     if (!Array.isArray(members) || members.length === 0) {
+//       return res.status(400).json({
+//         message: "Members array required",
+//       });
+//     }
 
-    // Call RAG service bulk delete by space_id
-    // await ragService.deleteBySpace(space._id);
+//     const added = [];
+//     const skipped = [];
 
-    return res.json({ message: "Space deleted successfully" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
+//     for (let memberId of members) {
+//       const exists = space.participants.some(
+//         (p) => p.user.toString() === memberId
+//       );
+
+//       if (exists || memberId === space.owner.toString()) {
+//         skipped.push(memberId);
+//         continue;
+//       }
+
+//       space.participants.push({
+//         user: memberId,
+//         role: "member",
+//       });
+
+//       added.push(memberId);
+//     }
+
+//     await space.save();
+
+//     return res.json({
+//       message: "Members processed",
+//       added,
+//       skipped,
+//     });
+//   } catch (err) {
+//     return res.status(500).json({ message: err.message });
+//   }
+// };
+
+// export const deleteSpace = async (req, res) => {
+//   try {
+//     const user = req.user;
+//     const { spaceId } = req.params;
+
+//     const space = await Space.findById(spaceId);
+
+//     if (!space || !space.isActive) {
+//       return res.status(404).json({ message: "Space not found" });
+//     }
+
+//     // ❌ Only owner can delete
+//     if (space.owner.toString() !== user._id.toString()) {
+//       return res.status(403).json({ message: "Not allowed" });
+//     }
+
+//     // ✅ Soft delete space
+//     space.isActive = false;
+//     await space.save();
+
+//     // ✅ Soft delete all documents in this space
+//     // await DocumentMeta.updateMany(
+//     //   { space: space._id },
+//     //   { status: "DELETED" }
+//     // );
+
+//     // Call RAG service bulk delete by space_id
+//     // await ragService.deleteBySpace(space._id);
+
+//     return res.json({ message: "Space deleted successfully" });
+//   } catch (err) {
+//     return res.status(500).json({ message: err.message });
+//   }
+// };

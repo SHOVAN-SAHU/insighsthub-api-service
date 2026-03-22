@@ -4,7 +4,7 @@ export const setAuthCookie = (res, token) => {
   res.cookie(config.cookieName, token, {
     httpOnly: true,
     secure: config.isProduction,
-    sameSite: "lax",
+    sameSite: config.isProduction ? "none" : "lax",
     domain: config.isProduction ? ".insightshub.in" : undefined,
     maxAge: config.cookieMaxAge,
   });
@@ -14,7 +14,7 @@ export const clearAuthCookie = (res) => {
   res.clearCookie(config.cookieName, {
     httpOnly: true,
     secure: config.isProduction,
-    sameSite: "lax",
+    sameSite: config.isProduction ? "none" : "lax",
     domain: config.isProduction ? ".insightshub.in" : undefined,
   });
 };

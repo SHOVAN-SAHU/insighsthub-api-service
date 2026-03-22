@@ -40,7 +40,23 @@ export const uploadDocument = async (req, res) => {
     const quotaOwnerUser = await findUserById(space.owner);
 
     // Check quota
-    await checkAndConsumeQuota(quotaOwnerUser, "UPLOAD");
+    try {
+      await checkAndConsumeQuota(quotaOwnerUser, "UPLOAD");
+    } catch (err) {
+      if (err.message === "UPLOAD_QUOTA_EXCEEDED") {
+        return res.status(403).json({
+          message: "Upload quota exceeded",
+        });
+      }
+
+      if (err.message === "INVALID_PLAN") {
+        return res.status(400).json({
+          message: "Invalid plan",
+        });
+      }
+
+      throw err;
+    }
 
     // Upload file
     let fileKey;
@@ -180,5 +196,46 @@ export const deleteDocument = async (req, res) => {
   } catch (err) {
     console.error("Delete Error:", err);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getSpaceDocuments = async (req, res) => {
+  try {
+    const user = req.user;
+    const { spaceId } = req.params;
+
+    // Validate space access
+    const space = await Space.findOne({
+      _id: spaceId,
+      isActive: true,
+      $or: [
+        { owner: user._id },
+        { "participants.user": user._id },
+      ],
+    });
+
+    if (!space) {
+      return res.status(404).json({
+        message: "Space not found",
+      });
+    }
+
+    // Fetch documents (only required fields)
+    const documents = await Document.find({
+      space: spaceId,
+    })
+      .select("_id filename status createdAt") // limit fields
+      .sort({ createdAt: -1 }) // latest first
+      .lean();
+
+    return res.json({
+      documents,
+    });
+  } catch (err) {
+    console.error("Fetch Documents Error:", err);
+
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
   }
 };

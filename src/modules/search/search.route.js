@@ -1,9 +1,9 @@
 import express from "express";
-import { askQuestion } from "./ask.controller.js";
+import { searchUsers } from "./search.controller.js";
 import { requireAuth } from "../auth/auth.middleware.js"
 
 const router = express.Router();
 
-router.post("/:spaceId", requireAuth, askQuestion);
+router.get("/", requireAuth, searchUsers);
 
 export default router;

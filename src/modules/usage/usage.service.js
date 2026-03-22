@@ -68,7 +68,7 @@ export const checkAndConsumeQuota = async (user, type) => {
   const planDoc = await Plan.findOne({ name: user.plan });
 
   if (!planDoc) {
-    throw new Error("Invalid plan");
+    throw new Error("INVALID_PLAN");
   }
 
   const limits = planDoc.limits;
@@ -94,11 +94,11 @@ export const checkAndConsumeQuota = async (user, type) => {
   const updated = await Usage.findOneAndUpdate(
     query,
     update,
-    { new: true }
+    { returnDocument: "after" }
   );
 
   if (!updated) {
-    throw new Error(`${reqType} quota exceeded`);
+    throw new Error(`${reqType}_QUOTA_EXCEEDED`);
   }
 
   return updated;

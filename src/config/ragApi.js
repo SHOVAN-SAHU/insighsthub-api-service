@@ -13,6 +13,15 @@ export const callRagIngestion = async (payload) => {
   });
 };
 
+export const callRagAsk = async (payload) => {
+  return axios.post(`${RAG_URL}/api/v1/documents/ask`, payload, {
+    headers: {
+      "x-api-key": API_KEY,
+    },
+    timeout: 15000,
+  });
+};
+
 export const callRagDelete = async (meta) => {
   console.log("meta", meta);
   return axios.delete(`${RAG_URL}/api/v1/documents/${meta.documentId}`, {
