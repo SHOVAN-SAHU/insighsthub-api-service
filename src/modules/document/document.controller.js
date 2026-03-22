@@ -5,9 +5,10 @@ import { findUserById } from "../user/user.service.js";
 import {
   uploadToStorage,
   generateSignedUrl,
+  deleteFromStorage,
 } from "../../config/objectStorage.js";
 
-import { callRagIngestion } from "../../config/ragApi.js";
+import { callRagIngestion, callRagDelete } from "../../config/ragApi.js";
 import { checkAndConsumeQuota } from "../usage/usage.service.js";
 import { validateFileSizeByType } from "./document.util.js";
 
@@ -21,10 +22,10 @@ export const uploadDocument = async (req, res) => {
       return res.status(400).json({ message: "File is required" });
     }
 
-    // ✅ 0. Validate file size/type (you were missing this)
+    // Validate file size/type
     validateFileSizeByType(file);
 
-    // 1. Validate space access
+    // Validate space access
     const space = await Space.findOne({
       _id: spaceId,
       isActive: true,
@@ -35,13 +36,13 @@ export const uploadDocument = async (req, res) => {
       return res.status(404).json({ message: "Space not found" });
     }
 
-    // 2. Resolve quota owner
+    // Resolve quota owner
     const quotaOwnerUser = await findUserById(space.owner);
 
-    // 3. Check quota
+    // Check quota
     await checkAndConsumeQuota(quotaOwnerUser, "UPLOAD");
 
-    // 4. Upload file
+    // Upload file
     let fileKey;
     try {
       const result = await uploadToStorage(file, spaceId);
@@ -53,7 +54,7 @@ export const uploadDocument = async (req, res) => {
       });
     }
 
-    // 5. Create document
+    // Create document
     const document = await Document.create({
       owner: quotaOwnerUser._id,
       space: space._id,
@@ -61,14 +62,14 @@ export const uploadDocument = async (req, res) => {
       fileKey,
     });
 
-    // 6. Generate signed URL
+    // Generate signed URL
     const signedUrl = await generateSignedUrl(fileKey);
 
-    // 7. Fire RAG ingestion (non-blocking)
+    // Fire RAG ingestion (non-blocking)
     callRagIngestion({
       document_id: document._id,
       file_url: signedUrl,
-      spaceId: space._id,
+      space_id: space._id,
       user_id: quotaOwnerUser._id,
       space_type: space.type,
     }).catch(async (err) => {
@@ -89,5 +90,95 @@ export const uploadDocument = async (req, res) => {
     return res.status(500).json({
       message: "Something went wrong",
     });
+  }
+};
+
+export const updateDocumentStatus = async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const { status, errorMessage } = req.body;
+
+    // ✅ Validate status
+    const allowed = ["ready", "failed"];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const document = await Document.findById(documentId);
+
+    if (!document || document.isDeleted) {
+      return res.status(404).json({ message: "Document not found" });
+    }
+
+    document.status = status;
+
+    if (status === "failed") {
+      document.errorMessage = errorMessage || "Processing failed";
+    }
+
+    await document.save();
+
+    return res.json({
+      message: "Document status updated",
+    });
+  } catch (err) {
+    console.error("Status Update Error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteDocument = async (req, res) => {
+  try {
+    const user = req.user;
+    const { documentId } = req.params;
+
+    // Find document
+    const document = await Document.findById(documentId);
+
+    if (!document || document.isDeleted) {
+      return res.status(404).json({ message: "Document not found" });
+    }
+
+    // Validate space access
+    const space = await Space.findOne({
+      _id: document.space,
+      isActive: true,
+      $or: [{ owner: user._id }, { "participants.user": user._id }],
+    });
+
+    if (!space) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Mark deleted FIRST (idempotency)
+    document.isDeleted = true;
+    await document.save();
+
+    // Call RAG delete (non-blocking)
+    const meta = {
+      documentId: document._id.toString(),
+      ownerId: space.owner.toString(),
+      spaceId: space._id ? space._id.toString() : null,
+      spaceType: space.type,
+    };
+    callRagDelete(meta)
+      .then((res) => {
+        console.log("RAG delete success");
+      })
+      .catch((err) => {
+        console.error("RAG delete failed:", err.response?.data || err.message);
+      });
+
+    // Delete from storage (non-blocking)
+    deleteFromStorage(document.fileKey).catch((err) => {
+      console.error("Storage delete failed:", err.message);
+    });
+
+    return res.json({
+      message: "Document deleted successfully",
+    });
+  } catch (err) {
+    console.error("Delete Error:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

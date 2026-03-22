@@ -6,7 +6,9 @@ const startServer = async () => {
   await connectDB();
 
   app.listen(config.port, () => {
-    console.log(`Server running on http://localhost:${config.port}`);
+    console.log(
+      `Server running on: ${config.isProduction ? "https://api.insightshub.in" : `http://localhost:${config.port}`} `,
+    );
   });
 };
 

@@ -42,3 +42,13 @@ export const isAdmin = (req, res, next) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const verifyInternalApiKey = (req, res, next) => {
+  const apiKey = req.headers["x-api-key"];
+
+  if (apiKey !== config.ragApiKey) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  next();
+};

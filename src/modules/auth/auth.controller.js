@@ -1,5 +1,6 @@
 import { handleGoogleLogin } from "./auth.service.js";
 import { setAuthCookie, clearAuthCookie } from "./cookie.util.js";
+import Usage from "../usage/usage.model.js";
 
 export const googleLogin = async (req, res) => {
   try {
@@ -28,5 +29,9 @@ export const logout = async (req, res) => {
 };
 
 export const getCurrentUser = async (req, res) => {
-  res.json({ user: req.user });
+  const user = req.user.toObject();
+  const used = await Usage.findOne({ userId: user._id });
+  res.json({
+    user: { ...user, uploadUsed: used.uploadsUsed, askedUsed: used.asksUsed },
+  });
 };
