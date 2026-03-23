@@ -48,10 +48,11 @@ export const createSubscription = async (req, res) => {
           message:
             "You have a pending subscription. Please complete the payment.",
           alreadyPending: true,
-          subscriptionId: pendingSubscription.razorpaySubscriptionId,
-          shortUrl: pendingSubscription.razorpayShortUrl,
+          razorpaySubscriptionId: pendingSubscription.razorpaySubscriptionId,
+          razorpayShortUrl: pendingSubscription.razorpayShortUrl,
         });
       } else {
+        console.log("cancleing pending sub:",  pendingSubscription.razorpaySubscriptionId)
         try {
           await razorpayInstance.subscriptions.cancel(
             pendingSubscription.razorpaySubscriptionId,
@@ -94,7 +95,9 @@ export const createSubscription = async (req, res) => {
     });
 
     return res.status(201).json({
-      subscription,
+      razorpaySubscriptionId: subscription.razorpaySubscriptionId,
+      razorpayShortUrl: subscription.razorpayShortUrl,
+      message: "Subscription created please confirm the paymnet before the url expired"
     });
   } catch (err) {
     console.error(err);

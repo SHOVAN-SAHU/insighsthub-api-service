@@ -72,7 +72,10 @@ export const getUserSpaces = async (req, res) => {
     const spaces = await Space.find({
       "participants.user": user._id,
       isActive: true,
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .populate("participants.user", "name email picture")
+      .populate("owner", "name email picture");
 
     return res.json(spaces);
   } catch (err) {
@@ -161,19 +164,19 @@ export const addMembers = async (req, res) => {
 
     // ✅ Precompute existing participants
     const existingParticipants = new Set(
-      space.participants.map((p) => p.user.toString())
+      space.participants.map((p) => p.user.toString()),
     );
 
     const ownerId = space.owner.toString();
 
     // ✅ Validate ObjectIds first
     const validObjectIds = members.filter((id) =>
-      mongoose.Types.ObjectId.isValid(id)
+      mongoose.Types.ObjectId.isValid(id),
     );
 
     // ❗ Everything else is auto-skipped
     const skipped = members.filter(
-      (id) => !mongoose.Types.ObjectId.isValid(id)
+      (id) => !mongoose.Types.ObjectId.isValid(id),
     );
 
     // ✅ Check which users actually exist
@@ -193,10 +196,7 @@ export const addMembers = async (req, res) => {
       }
 
       // ❌ Already exists OR owner
-      if (
-        existingParticipants.has(memberId) ||
-        memberId === ownerId
-      ) {
+      if (existingParticipants.has(memberId) || memberId === ownerId) {
         skipped.push(memberId);
         continue;
       }
@@ -271,9 +271,7 @@ export const removeMembers = async (req, res) => {
 
     // track skipped (not found)
     members.forEach((id) => {
-      const exists = space.participants.some(
-        (p) => p.user.toString() === id
-      );
+      const exists = space.participants.some((p) => p.user.toString() === id);
       if (!exists) skipped.push(id);
     });
 
