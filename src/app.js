@@ -59,7 +59,7 @@ app.use(
 // app.use(cspConfig);
 app.use(
   cors({
-    origin: config.isProduction ? config.fontendUrl : "http://localhost:3000",
+    origin: ['http://localhost:5173', config.fontendUrl],
     credentials: true,
   }),
 );

@@ -1,6 +1,7 @@
 import Space from "../space/space.model.js";
 import Document from "./document.model.js";
 import { findUserById } from "../user/user.service.js";
+import { refundQuota } from "./document.util.js"
 
 import {
   uploadToStorage,
@@ -95,6 +96,8 @@ export const uploadDocument = async (req, res) => {
         status: "failed",
         errorMessage: err.message,
       });
+
+      await refundQuota(quotaOwnerUser._id, "UPLOAD", document._id);
     });
 
     return res.status(201).json({

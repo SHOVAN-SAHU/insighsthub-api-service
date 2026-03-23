@@ -1,5 +1,6 @@
 import { checkAndConsumeQuota } from "../usage/usage.service.js";
 import Space from "../space/space.model.js";
+import Usage from "../usage/usage.model.js";
 import { callRagAsk } from "../../config/ragApi.js";
 import { findUserById } from "../user/user.service.js";
 
@@ -31,9 +32,12 @@ export const askQuestion = async (req, res) => {
     // Resolve quota owner (CRITICAL)
     const quotaOwnerUser = await findUserById(space.owner);
 
+    let quotaConsumed = false;
+
     // Consume ASK quota
     try {
       await checkAndConsumeQuota(quotaOwnerUser, "ASK");
+      quotaConsumed = true;
     } catch (err) {
       if (err.message === "ASK_QUOTA_EXCEEDED") {
         return res.status(403).json({
@@ -64,6 +68,13 @@ export const askQuestion = async (req, res) => {
       console.log(ragResponse);
     } catch (err) {
       console.error("RAG Ask Failed:", err.message);
+
+      if (quotaConsumed) {
+        await Usage.findOneAndUpdate(
+          { userId: quotaOwnerUser._id, asksUsed: { $gt: 0 } },
+          { $inc: { asksUsed: -1 } },
+        );
+      }
 
       return res.status(500).json({
         message: "Failed to process question",

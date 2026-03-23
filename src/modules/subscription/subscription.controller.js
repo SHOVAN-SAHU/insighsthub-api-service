@@ -95,7 +95,6 @@ export const createSubscription = async (req, res) => {
 
     return res.status(201).json({
       subscription,
-      razorpaySubscription,
     });
   } catch (err) {
     console.error(err);

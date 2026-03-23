@@ -23,7 +23,6 @@ export const callRagAsk = async (payload) => {
 };
 
 export const callRagDelete = async (meta) => {
-  console.log("meta", meta);
   return axios.delete(`${RAG_URL}/api/v1/documents/${meta.documentId}`, {
     headers: {
       "x-api-key": API_KEY,

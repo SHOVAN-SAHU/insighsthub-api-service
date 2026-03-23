@@ -4,7 +4,9 @@ import { razorpayInstance } from "../../config/razorpay.js";
 // GET /plans (public)
 export const getPlans = async (req, res) => {
   try {
-    const plans = await Plan.find({ isActive: true }).sort({ price: 1 });
+    const plans = await Plan.find({ isActive: true })
+      .sort({ price: 1 })
+      .select("-razorpayPlanId -__v");
 
     return res.json(plans);
   } catch (err) {
@@ -39,7 +41,7 @@ export const createPlan = async (req, res) => {
       price,
       durationDays,
       limits,
-      razorpayPlanId: razorpayPlan.id
+      razorpayPlanId: razorpayPlan.id,
     });
 
     return res.status(201).json(plan);

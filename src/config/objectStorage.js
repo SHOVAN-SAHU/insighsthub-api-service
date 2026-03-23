@@ -10,7 +10,8 @@ import { v4 as uuidv4 } from "uuid";
 import { config } from "./config.js"
 
 const s3 = new S3Client({
-  region: config.elasticlakeRegion,
+  // region: config.elasticlakeRegion,
+  region: "auto",
   endpoint: config.elasticlakeEndpoint,
   credentials: {
     accessKeyId: config.elasticlakeKey,

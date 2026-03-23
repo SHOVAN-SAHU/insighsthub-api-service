@@ -29,6 +29,11 @@ const documentSchema = new mongoose.Schema({
     default: "processing",
   },
 
+  quotaCharged: {
+    type: Boolean,
+    default: true
+  },
+
   errorMessage: {
     type: String,
   },
