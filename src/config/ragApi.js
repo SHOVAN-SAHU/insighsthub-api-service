@@ -8,8 +8,7 @@ export const callRagIngestion = async (payload) => {
   return axios.post(`${RAG_URL}/api/v1/documents/process`, payload, {
     headers: {
       "x-api-key": API_KEY,
-    },
-    timeout: 30000, // don't hang forever
+    }
   });
 };
 
@@ -32,7 +31,6 @@ export const callRagDelete = async (meta) => {
       user_id: meta.ownerId,
       space_id: meta.spaceId,
       space_type: meta.spaceType,
-    },
-    timeout: 15000,
+    }
   });
 };
