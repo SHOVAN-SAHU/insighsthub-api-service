@@ -228,6 +228,7 @@ export const getSpaceDocuments = async (req, res) => {
     // Fetch documents (only required fields)
     const documents = await Document.find({
       space: spaceId,
+      isDeleted: false,
     })
       .select("_id filename fileSize status createdAt") // limit fields
       .sort({ createdAt: -1 }) // latest first
