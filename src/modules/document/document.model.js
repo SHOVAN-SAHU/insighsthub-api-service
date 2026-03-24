@@ -23,6 +23,11 @@ const documentSchema = new mongoose.Schema({
     required: true,
   },
 
+  fileSize: {
+    type: Number, // bytes
+    required: true,
+  },
+
   status: {
     type: String,
     enum: ["processing", "ready", "failed"],

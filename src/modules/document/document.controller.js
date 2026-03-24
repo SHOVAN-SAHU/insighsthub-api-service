@@ -1,7 +1,7 @@
 import Space from "../space/space.model.js";
 import Document from "./document.model.js";
 import { findUserById } from "../user/user.service.js";
-import { refundQuota } from "./document.util.js"
+import { refundQuota } from "./document.util.js";
 
 import {
   uploadToStorage,
@@ -77,6 +77,7 @@ export const uploadDocument = async (req, res) => {
       space: space._id,
       filename: file.originalname,
       fileKey,
+      fileSize: file.size,
     });
 
     // Generate signed URL
@@ -117,7 +118,11 @@ export const updateDocumentStatus = async (req, res) => {
     const { documentId } = req.params;
     const { status, errorMessage } = req.body;
 
-    // ✅ Validate status
+    console.log(
+      `Called from RAG service to update document status, DocId: ${documentId}, Status: ${status}`,
+    );
+
+    // Validate status
     const allowed = ["ready", "failed"];
     if (!allowed.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
@@ -211,10 +216,7 @@ export const getSpaceDocuments = async (req, res) => {
     const space = await Space.findOne({
       _id: spaceId,
       isActive: true,
-      $or: [
-        { owner: user._id },
-        { "participants.user": user._id },
-      ],
+      $or: [{ owner: user._id }, { "participants.user": user._id }],
     });
 
     if (!space) {
@@ -227,7 +229,7 @@ export const getSpaceDocuments = async (req, res) => {
     const documents = await Document.find({
       space: spaceId,
     })
-      .select("_id filename status createdAt") // limit fields
+      .select("_id filename fileSize status createdAt") // limit fields
       .sort({ createdAt: -1 }) // latest first
       .lean();
 

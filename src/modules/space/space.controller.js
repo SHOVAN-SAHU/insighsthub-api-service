@@ -241,38 +241,63 @@ export const removeMembers = async (req, res) => {
       });
     }
 
-    // Only owner
-    if (space.owner.toString() !== user._id.toString()) {
-      return res.status(403).json({ message: "Not allowed" });
-    }
-
     if (!Array.isArray(members) || members.length === 0) {
       return res.status(400).json({
         message: "Members array required",
       });
     }
 
+    const requesterId = user._id.toString();
+    const ownerId = space.owner.toString();
+
+    const participantIds = space.participants.map((p) =>
+      p.user.toString()
+    );
+
+    // Check requester is part of space
+    if (!participantIds.includes(requesterId)) {
+      return res.status(403).json({
+        message: "You are not a member of this space",
+      });
+    }
+
+    // Owner trying to remove themselves
+    if (requesterId === ownerId && members.includes(ownerId)) {
+      return res.status(400).json({
+        message: "Owner cannot remove themselves",
+      });
+    }
+
     const removed = [];
     const skipped = [];
 
+    // Strict rule for non-owner
+    if (requesterId !== ownerId) {
+      if (members.length !== 1 || members[0] !== requesterId) {
+        return res.status(403).json({
+          message: "You can only remove yourself",
+        });
+      }
+    }
+
+    // Process removals
     space.participants = space.participants.filter((p) => {
       const userId = p.user.toString();
 
-      // Never remove owner
-      if (userId === space.owner.toString()) return true;
+      if (!members.includes(userId)) return true;
 
-      if (members.includes(userId)) {
-        removed.push(userId);
-        return false;
-      }
+      // Never remove owner (extra safety)
+      if (userId === ownerId) return true;
 
-      return true;
+      removed.push(userId);
+      return false;
     });
 
-    // track skipped (not found)
+    // Track skipped (invalid or not in space)
     members.forEach((id) => {
-      const exists = space.participants.some((p) => p.user.toString() === id);
-      if (!exists) skipped.push(id);
+      if (!participantIds.includes(id)) {
+        skipped.push(id);
+      }
     });
 
     await space.save();
@@ -286,68 +311,6 @@ export const removeMembers = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 };
-
-// export const addMembers = async (req, res) => {
-//   try {
-//     const user = req.user;
-//     const { spaceId } = req.params;
-//     const { members = [] } = req.body;
-
-//     const space = await Space.findById(spaceId);
-
-//     if (!space || !space.isActive) {
-//       return res.status(404).json({ message: "Space not found" });
-//     }
-
-//     if (space.type === "personal") {
-//       return res.status(400).json({
-//         message: "Cannot add members to personal space",
-//       });
-//     }
-
-//     // Only owner
-//     if (space.owner.toString() !== user._id.toString()) {
-//       return res.status(403).json({ message: "Not allowed" });
-//     }
-
-//     if (!Array.isArray(members) || members.length === 0) {
-//       return res.status(400).json({
-//         message: "Members array required",
-//       });
-//     }
-
-//     const added = [];
-//     const skipped = [];
-
-//     for (let memberId of members) {
-//       const exists = space.participants.some(
-//         (p) => p.user.toString() === memberId
-//       );
-
-//       if (exists || memberId === space.owner.toString()) {
-//         skipped.push(memberId);
-//         continue;
-//       }
-
-//       space.participants.push({
-//         user: memberId,
-//         role: "member",
-//       });
-
-//       added.push(memberId);
-//     }
-
-//     await space.save();
-
-//     return res.json({
-//       message: "Members processed",
-//       added,
-//       skipped,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({ message: err.message });
-//   }
-// };
 
 // export const deleteSpace = async (req, res) => {
 //   try {

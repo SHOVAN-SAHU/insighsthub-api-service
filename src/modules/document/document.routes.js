@@ -11,7 +11,7 @@ import {
 const router = express.Router();
 
 router.post("/upload/:spaceId", requireAuth, uploadSingle, uploadDocument);
-router.patch("/:documentId/status", verifyInternalApiKey, updateDocumentStatus);
+router.patch("/status/:documentId", verifyInternalApiKey, updateDocumentStatus);
 router.delete("/:documentId", requireAuth, deleteDocument);
 router.get("/:spaceId", requireAuth, getSpaceDocuments);
 
