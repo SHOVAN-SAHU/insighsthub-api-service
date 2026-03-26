@@ -59,7 +59,7 @@ export const handleGoogleLogin = async (idToken) => {
     });
   }
 
-  user.toObject();
+  user = user.toObject();
 
   // JWT
   const token = jwt.sign(
