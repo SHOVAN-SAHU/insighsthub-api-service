@@ -16,6 +16,17 @@ export const googleLogin = async (req, res) => {
 
     setAuthCookie(res, token);
 
+    const used = await Usage.findOne({ userId: user._id });
+    if (used) {
+      return res.json({
+        user: {
+          ...user,
+          uploadUsed: used.uploadsUsed,
+          askedUsed: used.asksUsed,
+        },
+      });
+    }
+
     res.json({ user });
   } catch (error) {
     console.error(error);
