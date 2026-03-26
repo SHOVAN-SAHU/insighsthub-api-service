@@ -8,11 +8,11 @@ export const searchUsers = async (req, res) => {
     const { q, spaceId, limit = 10 } = req.query;
 
     // Empty search = reject
-    if (!q || q.trim().length < 2) {
-      return res.status(400).json({
-        message: "Search query must be at least 2 characters",
-      });
-    }
+    // if (!q || q.trim().length < 2) {
+    //   return res.status(400).json({
+    //     message: "Search query must be at least 2 characters",
+    //   });
+    // }
 
     // Clamp limit
     const parsedLimit = Math.min(parseInt(limit) || 10, 20);
