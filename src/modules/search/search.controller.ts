@@ -51,7 +51,9 @@ export const searchUsers = async (
         },
         {
           _id: {
-            $nin: Array.from(excludeUserIds),
+            $nin: Array.from(excludeUserIds).map(
+              (id) => new mongoose.Types.ObjectId(id),
+            ),
           },
         },
       ],
