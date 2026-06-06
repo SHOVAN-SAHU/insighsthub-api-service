@@ -118,10 +118,10 @@ Each module follows a consistent layered pattern:
 
 ```
 module/
-  ├── module.routes.js      # Express router
-  ├── module.controller.js  # Request/response handling
-  ├── module.service.js     # Business logic
-  └── module.model.js       # Mongoose schema (if applicable)
+  ├── module.routes.ts      # Express router
+  ├── module.controller.ts  # Request/response handling
+  ├── module.service.ts     # Business logic
+  └── module.model.ts       # Mongoose schema
 ```
 
 ---
@@ -234,8 +234,8 @@ This service is hosted on [Render](https://render.com) at `https://api.insightsh
 | Setting | Value |
 |---|---|
 | **Environment** | Node |
-| **Build Command** | `npm install` |
-| **Start Command** | `node src/server.js` |
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `node dist/server.js` |
 | **Auto-Deploy** | Yes — on every push to `main` |
 
 All environment variables listed above must be added in the Render dashboard under **Environment → Environment Variables**.
