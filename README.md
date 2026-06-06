@@ -1,6 +1,6 @@
 # InsightsHub — Node API Service
 
-> The backend REST API powering **InsightsHub** — an AI-driven knowledge management platform where users can upload documents, organize them into spaces, ask questions using RAG (Retrieval-Augmented Generation), and manage subscriptions.
+> The backend REST API powering **InsightsHub** an AI-driven knowledge management platform where users can upload documents, organize them into spaces, ask questions using RAG (Retrieval-Augmented Generation), and manage subscriptions.
 
 [![Node.js](https://img.shields.io/badge/Node.js-22.x-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?logo=express&logoColor=white)](https://expressjs.com)
