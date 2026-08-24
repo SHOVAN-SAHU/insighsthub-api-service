@@ -6,6 +6,7 @@ export const config = {
   port: process.env.PORT || 8000,
   mongoUri: process.env.MONGO_URI as string,
   frontendUrl: process.env.FRONTEND_URL as string,
+  frontendUrl1: process.env.FRONTEND_URL_1 as string,
   ragServiceUrl: process.env.RAG_SERVICE_URL as string,
   ragApiKey: process.env.RAG_API_KEY as string,
   jwtSecret: process.env.JWT_SECRET as string,
